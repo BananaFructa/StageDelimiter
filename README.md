@@ -122,6 +122,10 @@ A more practical example would be this one:
 
 Kinda long but i think it makes it clear how things work. The first line blocks everything from immersive enginnering since it blocks all registry names that start with "immersiveengineering" and the next lines simply ban various recipes.
 
+## Server hosting
+
+If you are planning to use this mod on a server the people that connect to the server do not need to have their stage files set up, only the server needs them.
+
 ## Keys
 
 The way stages are unlocked is trough the usage of Stage Keys. A Stage Key is an item added by the mod with no recipe. A normal key doesn't have much use because it needs an NBT tag that contains what stage it unlocks. The simplest way to attribute such nbt tag is trough the in built ```/setkey``` command, the way you use it is by holding an Stage Key in your main hand and running the command ```/setkey <stage id>``` (it's a creative only command) and then that key will have the ability to unlock the specified stage (the stage id are the numbers which were attributed in the StageData.stg file).
