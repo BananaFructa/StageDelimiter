@@ -1,1 +1,2 @@
 item.stage_key.name=Stage Key
+command.team.usage=/team <action> <name(optional)>

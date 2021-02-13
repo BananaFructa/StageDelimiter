@@ -25,7 +25,7 @@ public class TeamInteractionCommand extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return null;
+        return "command.team.usage";
     }
 
     @Override
