@@ -130,7 +130,7 @@ You can then make that key be acquired trough a quest book or from a custom reci
 
 ## Tooltips
 
-If a player doesn't have a certain stage unlocked to craft an item if he hovers over that item in JEI for example the tooltip will contain a line of red text saying "Requires <name of the stage> !". Keys have a similar things, if a key unlocks a stage its tooltip will contain a green line of text saying "Unlocks <name of the stage> !"
+If a player doesn't have a certain stage unlocked to craft an item, if he hovers over that item, in JEI for example, the tooltip will contain a line of red text saying "Requires <name of the stage> !". Keys have a similar things, if a key unlocks a stage its tooltip will contain a green line of text saying "Unlocks <name of the stage> !"
 
 ## Teams
 
