@@ -1,6 +1,5 @@
 package BananaFructa.StgDel;
 
-import BananaFructa.StgDel.Team;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Tuple;

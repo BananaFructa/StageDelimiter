@@ -5,7 +5,6 @@ import BananaFructa.StgDel.Network.StgDelPacketHandler;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
-import org.lwjgl.Sys;
 
 import java.io.Serializable;
 import java.util.ArrayList;

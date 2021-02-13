@@ -1,24 +1,20 @@
 package BananaFructa.StgDel.Proxy;
 
-import BananaFructa.StgDel.*;
 import BananaFructa.StgDel.Commands.StageKeyCreationCommand;
 import BananaFructa.StgDel.Commands.TeamInteractionCommand;
 import BananaFructa.StgDel.Network.SPacketExportRegistryNames;
 import BananaFructa.StgDel.Network.SPacketStageChangeState;
 import BananaFructa.StgDel.Network.StgDelPacketHandler;
-import net.minecraft.entity.player.EntityPlayer;
+import BananaFructa.StgDel.*;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.Sys;
 
 import java.io.File;
 import java.util.*;
