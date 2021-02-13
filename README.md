@@ -130,7 +130,7 @@ You can then make that key be acquired trough a quest book or from a custom reci
 
 ## Teams
 
-If you are playing with some friends or you are doing some other thing and you want the ability for people to share stage progress you can create a team. If one member of the team unlocks a stage that stage will be unlocked for everyone within the team. If a person joins the difference of stage progress between that person and the team will be equalized, so if the person doesn't have stages unlocked that the team has those stages will become unlocked for that person and if the person has stages unlocked that the team doesn't have the rest of the team will get those stages unlocked.
+If you are playing with some friends or you are doing some other thing and you want the ability for people to share stage progress you can create a team. If one member of the team unlocks a stage that stage will be unlocked for everyone within the team. If a person joins the difference of stage progress between that person and the team will be equalized, so if the person doesn't have stages unlocked that the team has those stages will become unlocked for that person and if the person has stages unlocked that the team doesn't have, the rest of the team will get those stages unlocked.
 
 Commands about team managment and interaction are in the commands secion.
 
