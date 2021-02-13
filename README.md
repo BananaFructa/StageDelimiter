@@ -8,7 +8,7 @@ Something idk#2
 
 There can be as many stages as you want. The numbers after the "#" don't have to be in order they only have to be a positive integer and distinct from each other, those represent the stage id.
 
-After that you have to join any world again. Then in StgDel directory will be a file for each stage you have in StageDelimiter.stg, each having the name of the stage they represent and the .stg extension. Each one of those files is used for storeing the registry names of the result of the banned recipes for each stage.You have to put each separate registry name on a new line and if you are using craft tweaker for getting the registry names it doesn't matter if the names are between angle brackets.
+After that you have to join any world again. Then in StgDel directory will be a file for each stage you have in StageDelimiter.stg, each having the name of the stage they represent and the .stg extension. Each one of those files is used for storeing the registry names of the results of the banned recipes for each stage.You have to put each separate registry name on a new line and if you are using craft tweaker for getting the registry names it doesn't matter if the names are between angle brackets.
 
 ```
 minecraft:grass
