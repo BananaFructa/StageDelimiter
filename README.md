@@ -128,6 +128,10 @@ The way stages are unlocked is trough the usage of Stage Keys. A Stage Key is an
 
 You can then make that key be acquired trough a quest book or from a custom recipe using craft twaker.
 
+## Tooltips
+
+If a player doesn't have a certain stage unlocked to craft an item if he hovers over that item in JEI for example the tooltip will contain a line of red text saying "Requires <name of the stage> !". Keys have a similar things, if a key unlocks a stage its tooltip will contain a green line of text saying "Unlocks <name of the stage> !"
+
 ## Teams
 
 If you are playing with some friends or you are doing some other thing and you want the ability for people to share stage progress you can create a team. If one member of the team unlocks a stage that stage will be unlocked for everyone within the team. If a person joins the difference of stage progress between that person and the team will be equalized, so if the person doesn't have stages unlocked that the team has those stages will become unlocked for that person and if the person has stages unlocked that the team doesn't have, the rest of the team will get those stages unlocked.
