@@ -127,3 +127,27 @@ Kinda long but i think it makes it clear how things work. The first line blocks 
 The way stages are unlocked is trough the usage of Stage Keys. A Stage Key is an item added by the mod with no recipe. A normal key doesn't have much use because it needs an NBT tag that contains what stage it unlocks. The simplest way to attribute such nbt tag is trough the in built ```/setkey``` command, the way you use it is by holding an Stage Key in your main hand and running the command ```/setkey <stage id>``` (it's a creative only command) and then that key will have the ability to unlock the specified stage (the stage id are the numbers which were attributed in the StageData.stg file).
 
 You can then make that key be acquired trough a quest book or from a custom recipe using craft twaker.
+
+## Teams
+
+If you are playing with some friends or you are doing some other thing and you want the ability for people to share stage progress you can create a team. If one member of the team unlocks a stage that stage will be unlocked for everyone. If a person joins the difference of stage progress between that person and the team will be equalized, so if the person doesn't have stages unlocked that the team has those stages will become unlocked for that person and if the person has stages unlocked that the team doesn't have the rest of the team will get those stages unlocked.
+
+Commands about team managment and interaction are in the commands secion.
+
+## Commands
+
+```
+/setkey <stage id> - Makes the Stage Key which is held in the main had unlock the specified stage
+
+/team create <name> - Creates a team
+/team inviteonly - Toggles on or off if the team requires an invitation to join (owner only) (on by default)
+/team invite <player-name> - Invites a player into your team (owner only)
+/team kick <player-name> - Kicks a player from the team (owner only)
+/team ban <player-name> - Bans a player from the team (owner only)
+/team unban <player-name> - Unbans a player from the team (owner only)
+
+/team accept - Accepts the current pending invitation
+/team decline - Declines the current pending invitation
+/team join <team-name> - Joines the team with the specified name, you have to not be banned and the team has to not require an invitation
+/team leave - Exit a team (if you are the owner the team will be disbanded)
+```
