@@ -1,0 +1,16 @@
+[
+{
+  "modid": "stgdel",
+  "name": "StageDelimiter",
+  "description": "Allows the ability to create stages which block certain crafting recipes which can be unlocked in the future.",
+  "version": "1.0",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["BananaFructa"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
