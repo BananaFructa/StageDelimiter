@@ -1,2 +1,4 @@
+#PARSE_ESCAPES
 item.stage_key.name=Stage Key
-command.team.usage=/team <action> <name(optional)>
+command.team.usage=\n/team create <name> - Creates a team\n/team inviteonly - Toggles on or off invite only\n/team invite <player-name> - Invites a player into your team\n/team kick <player-name> - Kicks a player from the team\n/team ban <player-name> - Bans a player from the team\n/team unban <player-name> - Unbans a player from the team\n/team accept - Accepts the current pending invitation\n/team decline - Declines the current pending invitation\n/team join <team-name> - Joins the team\n/team leave - Exit a team
+command.key.usage=\n/setkey <stage id> - Makes the Stage Key which is held in the main hand to unlock the specified stage

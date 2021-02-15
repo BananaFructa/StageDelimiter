@@ -18,7 +18,7 @@ public class StageKeyCreationCommand extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return null;
+        return "command.key.usage";
     }
 
     @Override
