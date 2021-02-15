@@ -15,7 +15,7 @@ public class StgDel {
 
     public static final String modId = "stgdel";
     public static final String name = "StageDelimiter";
-    public static final String version = "1.0";
+    public static final String version = "1.1";
 
     @SidedProxy(modId = StgDel.modId,clientSide = "BananaFructa.StgDel.Proxy.ClientProxy",serverSide = "BananaFructa.StgDel.Proxy.CommonProxy")
     public static CommonProxy proxy;
