@@ -145,7 +145,7 @@ Commands about team managment and interaction are in the commands secion.
 ## Commands
 
 ```
-/setkey <stage id> - Makes the Stage Key which is held in the main had unlock the specified stage
+/setkey <stage id> - Makes the Stage Key which is held in the main hand to unlock the specified stage
 
 /team create <name> - Creates a team
 /team inviteonly - Toggles on or off if the team requires an invitation to join (owner only) (on by default)
