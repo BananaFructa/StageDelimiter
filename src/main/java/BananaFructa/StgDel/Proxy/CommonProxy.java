@@ -10,6 +10,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -25,7 +27,12 @@ public class CommonProxy {
     public HashMap<Integer, List<String>> StageRegistryNames = new HashMap<>();
     public List<TeamInvite> ActiveInvites = new ArrayList<>();
 
-    private List<TeamInvite> InvitesToDelete = new ArrayList<>();
+    private final List<TeamInvite> InvitesToDelete = new ArrayList<>();
+
+    private final HashMap<UUID,List<String>> BannedUsageCache = new HashMap<>();
+    private final HashMap<UUID,List<String>> AllowedUsageCache = new HashMap<>();
+
+    public StageStateData stageStateData;
 
     public void InitServer(FMLServerStartingEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
@@ -61,6 +68,8 @@ public class CommonProxy {
                 }
                 sdscanner.close();
             }
+
+            stageStateData = StageStateData.get(event.getServer().getWorld(0));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,7 +116,9 @@ public class CommonProxy {
 
     @SubscribeEvent
     public void onEntityJoined(PlayerEvent.PlayerLoggedInEvent event) {
-        StageStateData stageStateData = StageStateData.get(((EntityPlayerMP) event.player).getServerWorld());
+        BannedUsageCache.put(event.player.getUniqueID(),new ArrayList<>());
+        AllowedUsageCache.put(event.player.getUniqueID(),new ArrayList<>());
+
         stageStateData.AddPlayer(event.player.getUniqueID());
         stageStateData.AddUsernameUUID(event.player.getName(),event.player.getUniqueID());
 
@@ -126,15 +137,52 @@ public class CommonProxy {
     @SubscribeEvent
     public void onPlayerInteraction(PlayerInteractEvent.RightClickItem event) {
         if (!event.getWorld().isRemote) {
+            if (!IsItemUseAllowedForPlayer((EntityPlayerMP) event.getEntityPlayer(),event.getItemStack())) {
+                event.setCanceled(true);
+                return;
+            }
             Integer stage = GetStageUnlock(event.getItemStack());
             if (stage != null) {
+                ClearBannedCache();
                 ChangeStageStateFor((EntityPlayerMP) event.getEntityPlayer(), stage, true);
             }
         }
     }
 
+    @SubscribeEvent
+    public void onPlayerInteraction(PlayerInteractEvent.RightClickBlock event) {
+        if (!event.getWorld().isRemote) {
+            if (!IsItemUseAllowedForPlayer((EntityPlayerMP) event.getEntityPlayer(),event.getItemStack())) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerInteraction(PlayerInteractEvent.LeftClickBlock event) {
+        if (!event.getWorld().isRemote) {
+            if (!IsItemUseAllowedForPlayer((EntityPlayerMP) event.getEntityPlayer(),event.getItemStack())) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerInteraction(AttackEntityEvent event) {
+        if (!event.getEntityPlayer().getEntityWorld().isRemote) {
+            if (!IsItemUseAllowedForPlayer((EntityPlayerMP) event.getEntityPlayer(), event.getEntityPlayer().getHeldItemMainhand())) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    public void ClearBannedCache() {
+        for (UUID uuid : BannedUsageCache.keySet()) {
+            BannedUsageCache.get(uuid).clear();
+        }
+    }
+
     public void ChangeStageStateFor(EntityPlayerMP player, int ID, boolean state) {
-        StageStateData stageStateData = StageStateData.get(player.getServerWorld());
         UUID playerID = player.getUniqueID();
         for (Team t : stageStateData.Teams) {
             if (t.IsMemeber(playerID)) {
@@ -146,6 +194,8 @@ public class CommonProxy {
             StgDelPacketHandler.INSTNACE.sendTo(new SPacketStageChangeState(ID, state), player);
             if (state) {
                 player.sendMessage(new TextComponentString("\u00a7a" + StgDel.proxy.StageNameDictionary.get(ID) + " unlocked !"));
+            } else {
+                player.sendMessage(new TextComponentString("\u00a7c" + StgDel.proxy.StageNameDictionary.get(ID) + " locked !"));
             }
         }
     }
@@ -159,5 +209,32 @@ public class CommonProxy {
             }
         }
         return null;
+    }
+
+    public boolean IsItemUseAllowedForPlayer (EntityPlayerMP player,ItemStack is) {
+        if (is == null || player.capabilities.isCreativeMode) return true;
+        String name = is.getItem().getRegistryName().toString();
+        if (name.equals("minecraft:air")) return true;
+        UUID uuid = player.getUniqueID();
+        if (BannedUsageCache.get(uuid).contains(name)) return false;
+        if (AllowedUsageCache.get(uuid).contains(name)) return true;
+        List<Integer> UnlockedStages = stageStateData.PlayerData.get(player.getUniqueID());
+        for (Integer id : StageRegistryNames.keySet()) {
+            if (!UnlockedStages.contains(id)) {
+                if (StageRegistryNames.get(id).stream().anyMatch(o -> DoRegistriesMatch(o,name))) {
+                    BannedUsageCache.get(player.getUniqueID()).add(name);
+                    return false;
+                }
+            }
+        }
+        if (AllowedUsageCache.get(uuid).size() > 4) AllowedUsageCache.get(uuid).remove(0);
+        AllowedUsageCache.get(uuid).add(name);
+        return true;
+    }
+
+    public boolean DoRegistriesMatch(String a,String b) {
+        if (a.equals(b)) return true;
+        if (a.startsWith("!") && b.startsWith(a.replace("!",""))) return true;
+        return false;
     }
 }

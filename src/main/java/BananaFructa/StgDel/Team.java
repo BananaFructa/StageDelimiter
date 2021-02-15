@@ -109,6 +109,8 @@ public class Team implements Serializable {
                     if (state) {
                         // Means the player unlocked a new stage
                         player.sendMessage(new TextComponentString("\u00a7aStage " + StgDel.proxy.StageNameDictionary.get(ID) + " unlocked !"));
+                    } else {
+                        player.sendMessage(new TextComponentString("\u00a7cStage " + StgDel.proxy.StageNameDictionary.get(ID) + " locked !"));
                     }
                 }
             }

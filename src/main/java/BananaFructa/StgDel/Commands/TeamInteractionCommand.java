@@ -38,7 +38,7 @@ public class TeamInteractionCommand extends CommandBase {
 
         switch (args[0].toLowerCase()) {
             case "create":
-                switch (StageStateData.get(player.getServerWorld()).CreateTeam(player, args[1])) {
+                switch (StgDel.proxy.stageStateData.CreateTeam(player, args[1])) {
                     case -1:
                         player.sendMessage(new TextComponentString("\u00a7cYou are already in a team!"));
                         break;
@@ -51,7 +51,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "join":
-                switch (StageStateData.get(player.getServerWorld()).JoinTeam(player, args[1])) {
+                switch (StgDel.proxy.stageStateData.JoinTeam(player, args[1])) {
                     case -1:
                         player.sendMessage(new TextComponentString("\u00a7cYou are already in a team!"));
                         break;
@@ -70,7 +70,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "leave":
-                Tuple<Integer,String> result = StageStateData.get(player.getServerWorld()).LeaveTeam(player);
+                Tuple<Integer,String> result = StgDel.proxy.stageStateData.LeaveTeam(player);
                 switch (result.getFirst()) {
                     case -1:
                         player.sendMessage(new TextComponentString("\u00a7cYou are not in a team!"));
@@ -83,7 +83,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "kick":
-                switch (StageStateData.get(player.getServerWorld()).KickFromTeam(player,args[1])) {
+                switch (StgDel.proxy.stageStateData.KickFromTeam(player,args[1])) {
                     case -4:
                         player.sendMessage(new TextComponentString("\u00a7cYou are not in a team!"));
                         break;
@@ -102,7 +102,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "ban":
-                switch (StageStateData.get(player.getServerWorld()).BanFromTeam(player,args[1])) {
+                switch (StgDel.proxy.stageStateData.BanFromTeam(player,args[1])) {
                     case -4:
                         player.sendMessage(new TextComponentString("\u00a7cYou are not in a team!"));
                         break;
@@ -121,7 +121,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "unban":
-                switch (StageStateData.get(player.getServerWorld()).UnBanFromTeam(player,args[1])) {
+                switch (StgDel.proxy.stageStateData.UnBanFromTeam(player,args[1])) {
                     case -4:
                         player.sendMessage(new TextComponentString("\u00a7cYou are not in a team!"));
                         break;
@@ -140,7 +140,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "inviteonly":
-                switch (StageStateData.get(player.getServerWorld()).ToggleTeamInviteOnly(player)) {
+                switch (StgDel.proxy.stageStateData.ToggleTeamInviteOnly(player)) {
                     case -2:
                         player.sendMessage(new TextComponentString("\u00a7cYou are not in a team!"));
                         break;
@@ -156,7 +156,7 @@ public class TeamInteractionCommand extends CommandBase {
                 }
                 break;
             case "invite": {
-                    StageStateData data = StageStateData.get(player.getServerWorld());
+                    StageStateData data = StgDel.proxy.stageStateData;
                     UUID senderId = player.getUniqueID();
 
                     boolean IsPlayerInTeam = data.Teams.stream().anyMatch(o -> o.IsMemeber(senderId));
@@ -212,11 +212,11 @@ public class TeamInteractionCommand extends CommandBase {
                     if (invite == null) {
                         player.sendMessage(new TextComponentString("\u00a7cYou do not have a pending invite!"));
                     } else {
-                        boolean IsPlayerInTeam = StageStateData.get(player.getServerWorld()).Teams.stream().anyMatch(o -> o.IsMemeber(player.getUniqueID()));
+                        boolean IsPlayerInTeam = StgDel.proxy.stageStateData.Teams.stream().anyMatch(o -> o.IsMemeber(player.getUniqueID()));
                         if (IsPlayerInTeam) {
                             player.sendMessage(new TextComponentString("\u00a7cYou are already in a team, leave the team in which you are currently in to be able to join another one!"));
                         } else {
-                            String joinedTeam = StageStateData.get(player.getServerWorld()).AddPlayerToTeam(player, invite.teamId);
+                            String joinedTeam = StgDel.proxy.stageStateData.AddPlayerToTeam(player, invite.teamId);
                             if (joinedTeam != null) {
                                 StgDel.proxy.VoidInvite(invite);
                                 player.sendMessage(new TextComponentString("\u00a7aSuccessfully joined team " + joinedTeam + "!"));
@@ -233,7 +233,7 @@ public class TeamInteractionCommand extends CommandBase {
                     player.sendMessage(new TextComponentString("\u00a7cYou do not have a pending invite!"));
                 } else {
                     StgDel.proxy.VoidInvite(ti);
-                    player.sendMessage(new TextComponentString("\u00a7aInvite declined to join team " + StageStateData.get(player.getServerWorld()).GetTeam(ti.teamId) + "!"));
+                    player.sendMessage(new TextComponentString("\u00a7aInvite declined to join team " + StgDel.proxy.stageStateData.GetTeam(ti.teamId) + "!"));
                 }
                 break;
             default:

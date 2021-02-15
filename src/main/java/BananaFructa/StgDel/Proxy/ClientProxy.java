@@ -6,9 +6,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.ContainerWorkbench;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -74,10 +76,31 @@ public class ClientProxy extends CommonProxy {
         }
     }
 
-    public boolean DoRegistriesMatch(String a,String b) {
-        if (a.equals(b)) return true;
-        if (a.startsWith("!") && b.startsWith(a.replace("!",""))) return true;
-        return false;
+    @SubscribeEvent
+    public void onPlayerInteractionClient(PlayerInteractEvent.RightClickItem event) {
+        if (event.getWorld().isRemote) {
+            if (!IsRegistryNameAllowed(event.getItemStack().getItem().getRegistryName().toString())) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerInteractionClient(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getWorld().isRemote) {
+            if (!IsRegistryNameAllowed(event.getItemStack().getItem().getRegistryName().toString())) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerInteractionClient(PlayerInteractEvent.LeftClickBlock event) {
+        if (event.getWorld().isRemote) {
+            if (!IsRegistryNameAllowed(event.getItemStack().getItem().getRegistryName().toString())) {
+                event.setCanceled(true);
+            }
+        }
     }
 
     public boolean SetStageState(int ID,boolean state) {
@@ -91,6 +114,7 @@ public class ClientProxy extends CommonProxy {
     }
 
     public boolean IsRegistryNameAllowed(String registryName) {
+        if (registryName.equals("minecraft:air") || mc.player.capabilities.isCreativeMode) return true;
         for (Stage s : Stages) {
             if (!s.isActive()) {
                 if (s.RegistryNames.stream().anyMatch(o -> DoRegistriesMatch(o, registryName))) {
