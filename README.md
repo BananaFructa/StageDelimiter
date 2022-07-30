@@ -147,15 +147,15 @@ Commands about team managment and interaction are in the commands secion.
 ```
 /setkey <stage id> - Makes the Stage Key which is held in the main hand to unlock the specified stage
 
-/team create <name> - Creates a team
-/team inviteonly - Toggles on or off if the team requires an invitation to join (owner only) (on by default)
-/team invite <player-name> - Invites a player into your team (owner only)
-/team kick <player-name> - Kicks a player from the team (owner only)
-/team ban <player-name> - Bans a player from the team (owner only)
-/team unban <player-name> - Unbans a player from the team (owner only)
+/sdteam create <name> - Creates a team
+/sdteam inviteonly - Toggles on or off if the team requires an invitation to join (owner only) (on by default)
+/sdteam invite <player-name> - Invites a player into your team (owner only)
+/sdteam kick <player-name> - Kicks a player from the team (owner only)
+/sdteam ban <player-name> - Bans a player from the team (owner only)
+/sdteam unban <player-name> - Unbans a player from the team (owner only)
 
-/team accept - Accepts the current pending invitation
-/team decline - Declines the current pending invitation
-/team join <team-name> - Joines the team with the specified name, you have to not be banned and the team has to not require an invitation
-/team leave - Exit a team (if you are the owner the team will be disbanded)
+/sdteam accept - Accepts the current pending invitation
+/sdteam decline - Declines the current pending invitation
+/sdteam join <team-name> - Joines the team with the specified name, you have to not be banned and the team has to not require an invitation
+/sdteam leave - Exit a team (if you are the owner the team will be disbanded)
 ```

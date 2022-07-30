@@ -3,7 +3,7 @@
   "modid": "stgdel",
   "name": "StageDelimiter",
   "description": "Allows the ability to create stages which block certain crafting recipes which can be unlocked in the future.",
-  "version": "1.1",
+  "version": "1.1.1",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",

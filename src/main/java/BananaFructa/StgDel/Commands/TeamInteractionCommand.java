@@ -19,7 +19,7 @@ public class TeamInteractionCommand extends CommandBase {
 
     @Override
     public String getName() {
-        return "team";
+        return "sdteam";
     }
 
     @Override
