@@ -23,11 +23,13 @@ public class StgDel {
     @Mod.EventHandler
     public void PreInit(FMLPreInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(proxy);
+        Config.init(event.getModConfigurationDirectory());
     }
 
     @Mod.EventHandler
     public void Init(FMLInitializationEvent event) {
         if (proxy instanceof ClientProxy) ((ClientProxy)proxy).InitClient(event);
+        if (Config.syncWithBetterQuesting) BetterQuestingMethodWrapper.init();
     }
 
     @Mod.EventHandler

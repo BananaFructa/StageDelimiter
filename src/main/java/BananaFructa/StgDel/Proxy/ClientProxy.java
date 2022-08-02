@@ -1,14 +1,19 @@
 package BananaFructa.StgDel.Proxy;
 
+import BananaFructa.StgDel.Config;
+import BananaFructa.StgDel.Gui.GuiBQSynced;
 import BananaFructa.StgDel.Network.StgDelPacketHandler;
 import BananaFructa.StgDel.Stage;
+import betterquesting.client.gui2.party.GuiPartyCreate;
+import betterquesting.client.gui2.party.GuiPartyManage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.gui.inventory.GuiInventory;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.ContainerWorkbench;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -38,7 +43,7 @@ public class ClientProxy extends CommonProxy {
     public void onTick(TickEvent.ClientTickEvent event) {
         if (mc.currentScreen instanceof GuiInventory) {
             GuiContainer container = (GuiContainer) mc.currentScreen;
-            if(!IsRegistryNameAllowed(container.inventorySlots.getSlot(0).getStack().getItem().getRegistryName().toString())) {
+            if(!IsItemUseAllowed(container.inventorySlots.getSlot(0).getStack())) {
                 for (int i = 1;i < 5;i++) {
                     mc.playerController.windowClick(container.inventorySlots.windowId,i,0,ClickType.QUICK_MOVE,mc.player);
                 }
@@ -46,7 +51,7 @@ public class ClientProxy extends CommonProxy {
         } else if (mc.currentScreen instanceof GuiCrafting) {
             GuiContainer container = (GuiContainer) mc.currentScreen;
             ContainerWorkbench containerWorkbench = (ContainerWorkbench) container.inventorySlots;
-            if (!IsRegistryNameAllowed(containerWorkbench.craftResult.getStackInSlot(0).getItem().getRegistryName().toString())) {
+            if (!IsItemUseAllowed(containerWorkbench.craftResult.getStackInSlot(0))) {
                 for (int i = 1; i < 10; i++) {
                     mc.playerController.windowClick(containerWorkbench.windowId, i, 0, ClickType.QUICK_MOVE, mc.player);
                 }
@@ -67,6 +72,7 @@ public class ClientProxy extends CommonProxy {
             }
         }
 
+        if (IsItemUseAllowed(event.getItemStack())) return;
         for (Stage s : Stages) {
             if (!s.isActive()) {
                 if (s.RegistryNames.stream().anyMatch(o -> DoRegistriesMatch(o,event.getItemStack().getItem().getRegistryName().toString()))) {
@@ -79,7 +85,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onPlayerInteractionClient(PlayerInteractEvent.RightClickItem event) {
         if (event.getWorld().isRemote) {
-            if (!IsRegistryNameAllowed(event.getItemStack().getItem().getRegistryName().toString())) {
+            if (!IsItemUseAllowed(event.getItemStack())) {
                 event.setCanceled(true);
             }
         }
@@ -88,7 +94,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onPlayerInteractionClient(PlayerInteractEvent.RightClickBlock event) {
         if (event.getWorld().isRemote) {
-            if (!IsRegistryNameAllowed(event.getItemStack().getItem().getRegistryName().toString())) {
+            if (!IsItemUseAllowed(event.getItemStack())) {
                 event.setCanceled(true);
             }
         }
@@ -97,8 +103,18 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onPlayerInteractionClient(PlayerInteractEvent.LeftClickBlock event) {
         if (event.getWorld().isRemote) {
-            if (!IsRegistryNameAllowed(event.getItemStack().getItem().getRegistryName().toString())) {
+            if (!IsItemUseAllowed(event.getItemStack())) {
                 event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGuiOpen(GuiOpenEvent event) {
+        if (Config.syncWithBetterQuesting && event.getGui() != null) {
+            if (event.getGui() instanceof GuiPartyManage || event.getGui() instanceof GuiPartyCreate) {
+                event.setCanceled(true);
+                Minecraft.getMinecraft().displayGuiScreen(new GuiBQSynced());
             }
         }
     }
@@ -113,15 +129,8 @@ public class ClientProxy extends CommonProxy {
         return false;
     }
 
-    public boolean IsRegistryNameAllowed(String registryName) {
-        if (registryName.equals("minecraft:air") || mc.player.capabilities.isCreativeMode) return true;
-        for (Stage s : Stages) {
-            if (!s.isActive()) {
-                if (s.RegistryNames.stream().anyMatch(o -> DoRegistriesMatch(o, registryName))) {
-                    return  false;
-                }
-            }
-        }
-        return true;
+    public boolean IsItemUseAllowed(ItemStack stack) {
+        if (Minecraft.getMinecraft().player == null) return true;
+        return IsItemUseAllowedForPlayer(Minecraft.getMinecraft().player, stack);
     }
 }

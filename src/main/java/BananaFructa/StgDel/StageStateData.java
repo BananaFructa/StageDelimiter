@@ -21,7 +21,9 @@ public class StageStateData extends WorldSavedData {
 
     public List<Team> Teams = new ArrayList<>();
     public HashMap<UUID,List<Integer>> PlayerData = new HashMap<>();
-    public HashMap<String,UUID> StoredUsernamesToUUID = new HashMap<>(); //TODO: asd
+    public HashMap<String,UUID> StoredUsernamesToUUID = new HashMap<>();
+
+    public HashMap<Long,Integer> stdIdToBqId = new HashMap<>();
 
     public StageStateData() {
         super(DATA_NAME);
@@ -46,6 +48,7 @@ public class StageStateData extends WorldSavedData {
         ByteArrayInputStream byteIn_PD = new ByteArrayInputStream(nbt.getByteArray("PlayerData"));
         ByteArrayInputStream byteIn_TD = new ByteArrayInputStream(nbt.getByteArray("Teams"));
         ByteArrayInputStream byteIn_UUID = new ByteArrayInputStream(nbt.getByteArray("StoredUUIDs"));
+        ByteArrayInputStream byteIn_ids = new ByteArrayInputStream(nbt.getByteArray("SDBQ_IDS"));
 
         try {
 
@@ -58,6 +61,9 @@ public class StageStateData extends WorldSavedData {
             ObjectInputStream in_UUID = new ObjectInputStream(byteIn_UUID);
             StoredUsernamesToUUID = (HashMap<String,UUID>) in_UUID.readObject();
 
+            ObjectInputStream in_ids = new ObjectInputStream(byteIn_ids);
+            stdIdToBqId = (HashMap<Long, Integer>) in_ids.readObject();
+
         } catch (Exception exception) {
             exception.printStackTrace();
         }
@@ -69,6 +75,7 @@ public class StageStateData extends WorldSavedData {
         ByteArrayOutputStream byteOut_PD = new ByteArrayOutputStream();
         ByteArrayOutputStream byteOut_TD = new ByteArrayOutputStream();
         ByteArrayOutputStream byteOut_UUID = new ByteArrayOutputStream();
+        ByteArrayOutputStream byteOut_ids = new ByteArrayOutputStream();
 
         try {
 
@@ -87,6 +94,11 @@ public class StageStateData extends WorldSavedData {
             out_UUID.writeObject(StoredUsernamesToUUID);
             compound.setByteArray("StoredUUIDs", byteOut_UUID.toByteArray());
 
+            ObjectOutputStream out_ids = new ObjectOutputStream(byteOut_ids);
+
+            out_ids.writeObject(stdIdToBqId);
+            compound.setByteArray("SDBQ_IDS", byteOut_ids.toByteArray());
+
 
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -102,6 +114,15 @@ public class StageStateData extends WorldSavedData {
             }
         }
         return null;
+    }
+
+    public long GetTeamID(String name) {
+        for (Team t : Teams) {
+            if (t.Name.equals(name.toLowerCase())) {
+                return t.ID;
+            }
+        }
+        return -1;
     }
 
     public boolean AddPlayer(UUID player) {
@@ -149,6 +170,10 @@ public class StageStateData extends WorldSavedData {
         Teams.add(new Team(sender,name.toLowerCase(),(Teams.size() == 0 ? 0 : Teams.get(Teams.size() - 1).ID + 1)));
         markDirty();
 
+        if (Config.syncWithBetterQuesting) {
+            BetterQuestingMethodWrapper.onCreate(sender,name);
+        }
+
         return 1; // Succes
     }
 
@@ -163,10 +188,16 @@ public class StageStateData extends WorldSavedData {
                 if (t.IsInviteOnly) return -4; // The team is invite only
                 if (t.IsPlayerBanned(sender.getUniqueID())) return -3; // You are banned
                 t.AddMemeber(sender);
+
+                if (Config.syncWithBetterQuesting) {
+                    BetterQuestingMethodWrapper.onJoin(sender,t.ID);
+                }
+
                 break;
             }
         }
         markDirty();
+
         return 1; // Succes
     }
 
@@ -177,12 +208,23 @@ public class StageStateData extends WorldSavedData {
         for (Team t : Teams) {
             if (t.IsMemeber(senderId)) {
                 if (t.Owner.equals(senderId)) {
+
+                    if (Config.syncWithBetterQuesting) {
+                        BetterQuestingMethodWrapper.onLeaveAndDestroy(sender, t.ID);
+                    }
+
                     Teams.remove(t);
                     markDirty();
+
                     return new Tuple<>(2,t.Name); // The player was the owner of the team (Succes)
                 } else {
                     t.RemoveMember(senderId);
                     markDirty();
+
+                    if (Config.syncWithBetterQuesting) {
+                        BetterQuestingMethodWrapper.onLeave(sender, t.ID);
+                    }
+
                     return new Tuple<>(1,t.Name); // Succes
                 }
             }
@@ -215,6 +257,11 @@ public class StageStateData extends WorldSavedData {
                 if (toBeKicked != null) toBeKicked.sendMessage(new TextComponentString("\u00a7cYou have been kicked from the team " + t.Name + "!"));
 
                 markDirty();
+
+                if (Config.syncWithBetterQuesting) {
+                    BetterQuestingMethodWrapper.onKick(toBeKicked,t.ID);
+                }
+
                 return 1;
             }
         }
@@ -248,6 +295,11 @@ public class StageStateData extends WorldSavedData {
                 if (toBeBanned != null) toBeBanned.sendMessage(new TextComponentString("\u00a7cYou have been banned from the team " + t.Name + "!"));
 
                 markDirty();
+
+                if (Config.syncWithBetterQuesting) {
+                    BetterQuestingMethodWrapper.onBan(toBeBanned,t.ID);
+                }
+
                 return 1;
             }
         }
@@ -330,5 +382,16 @@ public class StageStateData extends WorldSavedData {
         StoredUsernamesToUUID.put(name,uuid);
         markDirty();
     }
+
+    public void AddID(long sid,int bid) {
+        stdIdToBqId.put(sid,bid);
+        markDirty();
+    }
+
+    public void RemoveID(long sid) {
+        stdIdToBqId.remove(sid);
+        markDirty();
+    }
+
 
 }

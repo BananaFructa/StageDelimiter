@@ -1,13 +1,12 @@
 package BananaFructa.StgDel.Commands;
 
-import BananaFructa.StgDel.StageStateData;
-import BananaFructa.StgDel.StgDel;
-import BananaFructa.StgDel.Team;
-import BananaFructa.StgDel.TeamInvite;
+import BananaFructa.StgDel.*;
+import betterquesting.network.handlers.NetPartyAction;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.text.TextComponentString;
@@ -19,7 +18,7 @@ public class TeamInteractionCommand extends CommandBase {
 
     @Override
     public String getName() {
-        return "sdteam";
+        return "team";
     }
 
     @Override
@@ -33,7 +32,7 @@ public class TeamInteractionCommand extends CommandBase {
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+    public synchronized void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         EntityPlayerMP player = (EntityPlayerMP) sender.getCommandSenderEntity();
 
         switch (args[0].toLowerCase()) {
@@ -77,6 +76,8 @@ public class TeamInteractionCommand extends CommandBase {
                         break;
                     case 2:
                         player.sendMessage(new TextComponentString("\u00a7cSince you were the team leader the team was disbanded!"));
+                        player.sendMessage(new TextComponentString("\u00a7aSuccessfully left team " + result.getSecond() + "!"));
+                        break;
                     case 1:
                         player.sendMessage(new TextComponentString("\u00a7aSuccessfully left team " + result.getSecond() + "!"));
                         break;
@@ -188,6 +189,11 @@ public class TeamInteractionCommand extends CommandBase {
                                 } else {
 
                                     if (StgDel.proxy.AddTeamInvite(new TeamInvite(playerToInvite.getUniqueID(), t.ID, 60000))) {
+
+                                        if (Config.syncWithBetterQuesting) {
+                                            BetterQuestingMethodWrapper.onInvite(player,args[1],60000,t.ID);
+                                        }
+
                                         player.sendMessage(new TextComponentString("\u00a7aSuccessfully sent an invite to " + args[1] + "!"));
                                         playerToInvite.sendMessage(new TextComponentString("\u00a73You were invited to join team " + t.Name + " you have 60 seconds to accept/decline"));
                                         playerToInvite.sendMessage(new TextComponentString("\u00a73You can accept using /team accept and decline using /team decline"));
@@ -219,6 +225,9 @@ public class TeamInteractionCommand extends CommandBase {
                             String joinedTeam = StgDel.proxy.stageStateData.AddPlayerToTeam(player, invite.teamId);
                             if (joinedTeam != null) {
                                 StgDel.proxy.VoidInvite(invite);
+                                if (Config.syncWithBetterQuesting) {
+                                    BetterQuestingMethodWrapper.onAcceptInvite(player,invite.teamId);
+                                }
                                 player.sendMessage(new TextComponentString("\u00a7aSuccessfully joined team " + joinedTeam + "!"));
                             } else {
                                 player.sendMessage(new TextComponentString("\u00a7cAn unexpected error has occurred!"));
@@ -233,7 +242,10 @@ public class TeamInteractionCommand extends CommandBase {
                     player.sendMessage(new TextComponentString("\u00a7cYou do not have a pending invite!"));
                 } else {
                     StgDel.proxy.VoidInvite(ti);
-                    player.sendMessage(new TextComponentString("\u00a7aInvite declined to join team " + StgDel.proxy.stageStateData.GetTeam(ti.teamId) + "!"));
+                    if (Config.syncWithBetterQuesting) {
+                        BetterQuestingMethodWrapper.onDeclineInvite(player,ti.teamId);
+                    }
+                    player.sendMessage(new TextComponentString("\u00a7aInvite declined to join team " + StgDel.proxy.stageStateData.GetTeam(ti.teamId).Name + "!"));
                 }
                 break;
             default:

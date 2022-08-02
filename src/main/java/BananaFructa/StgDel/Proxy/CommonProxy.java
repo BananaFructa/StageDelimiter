@@ -6,6 +6,7 @@ import BananaFructa.StgDel.Network.SPacketExportRegistryNames;
 import BananaFructa.StgDel.Network.SPacketStageChangeState;
 import BananaFructa.StgDel.Network.StgDelPacketHandler;
 import BananaFructa.StgDel.*;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentString;
@@ -211,25 +212,43 @@ public class CommonProxy {
         return null;
     }
 
-    public boolean IsItemUseAllowedForPlayer (EntityPlayerMP player,ItemStack is) {
-        if (is == null || player.capabilities.isCreativeMode) return true;
-        String name = is.getItem().getRegistryName().toString();
-        if (name.equals("minecraft:air")) return true;
-        UUID uuid = player.getUniqueID();
-        if (BannedUsageCache.get(uuid).contains(name)) return false;
-        if (AllowedUsageCache.get(uuid).contains(name)) return true;
-        List<Integer> UnlockedStages = stageStateData.PlayerData.get(player.getUniqueID());
-        for (Integer id : StageRegistryNames.keySet()) {
-            if (!UnlockedStages.contains(id)) {
-                if (StageRegistryNames.get(id).stream().anyMatch(o -> DoRegistriesMatch(o,name))) {
-                    BannedUsageCache.get(player.getUniqueID()).add(name);
-                    return false;
+    public boolean IsItemUseAllowedForPlayer (EntityPlayer player, ItemStack is) {
+        try {
+            if (is == null || player.capabilities.isCreativeMode) return true;
+            String name = is.getItem().getRegistryName().toString();
+            if (name.equals("minecraft:air")) return true;
+            UUID uuid = player.getUniqueID();
+            if (BannedUsageCache.get(uuid) == null || AllowedUsageCache.get(uuid) == null) return true;
+            if (BannedUsageCache.get(uuid).contains(name)) return false;
+            if (AllowedUsageCache.get(uuid).contains(name)) return true;
+            List<Integer> UnlockedStages = stageStateData.PlayerData.get(player.getUniqueID());
+            for (Integer id : StageRegistryNames.keySet()) {
+                if (!UnlockedStages.contains(id)) {
+                    for (String register : StageRegistryNames.get(id)) {
+                        if (IsRegistryExcepted(register, name)) {
+                            if (AllowedUsageCache.get(uuid).size() > 4) AllowedUsageCache.get(uuid).remove(0);
+                            AllowedUsageCache.get(uuid).add(name);
+                            return true;
+                        }
+                        if (DoRegistriesMatch(register, name)) {
+                            BannedUsageCache.get(player.getUniqueID()).add(name);
+                            return false;
+                        }
+                    }
                 }
             }
+            if (AllowedUsageCache.get(uuid).size() > 4) AllowedUsageCache.get(uuid).remove(0);
+            AllowedUsageCache.get(uuid).add(name);
+            return true;
+        } catch (Exception err) {
+            err.printStackTrace();
+            return true;
         }
-        if (AllowedUsageCache.get(uuid).size() > 4) AllowedUsageCache.get(uuid).remove(0);
-        AllowedUsageCache.get(uuid).add(name);
-        return true;
+    }
+
+    public boolean IsRegistryExcepted(String a,String b) {
+        if (a.startsWith("@") && b.startsWith(a.replace("@",""))) return true;
+        return false;
     }
 
     public boolean DoRegistriesMatch(String a,String b) {
