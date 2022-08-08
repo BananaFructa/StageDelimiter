@@ -11,6 +11,7 @@ public class StgDelPacketHandler {
     public static void RegisterPackets() {
         INSTNACE.registerMessage(SPacketStageChangeStateHandler.class, SPacketStageChangeState.class,0, Side.CLIENT);
         INSTNACE.registerMessage(SPacketExportRegistryNamesHandler.class, SPacketExportRegistryNames.class,1,Side.CLIENT);
+        INSTNACE.registerMessage(SPacketSyncBQHandler.class,SPacketSyncBQ.class,2,Side.CLIENT);
     }
 
 

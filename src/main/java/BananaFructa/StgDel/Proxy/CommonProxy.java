@@ -4,6 +4,7 @@ import BananaFructa.StgDel.Commands.StageKeyCreationCommand;
 import BananaFructa.StgDel.Commands.TeamInteractionCommand;
 import BananaFructa.StgDel.Network.SPacketExportRegistryNames;
 import BananaFructa.StgDel.Network.SPacketStageChangeState;
+import BananaFructa.StgDel.Network.SPacketSyncBQ;
 import BananaFructa.StgDel.Network.StgDelPacketHandler;
 import BananaFructa.StgDel.*;
 import net.minecraft.entity.player.EntityPlayer;
@@ -125,6 +126,9 @@ public class CommonProxy {
 
         // Exports the stage data to the client
         StgDelPacketHandler.INSTNACE.sendTo(new SPacketExportRegistryNames(StageNameDictionary, StageRegistryNames), (EntityPlayerMP) event.player);
+
+        // Sets the better questing sync flag
+        StgDelPacketHandler.INSTNACE.sendTo(new SPacketSyncBQ(Config.syncWithBetterQuesting), (EntityPlayerMP) event.player);
 
         // Loads all the unlocked stages to the client
         UUID playerId = event.player.getUniqueID();

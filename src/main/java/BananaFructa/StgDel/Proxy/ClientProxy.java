@@ -30,6 +30,9 @@ public class ClientProxy extends CommonProxy {
 
     public List<Stage> Stages = new ArrayList<>();
 
+    // client side boolean
+    public boolean syncWithBQ = false;
+
     public void InitClient(FMLInitializationEvent event) {
         StgDelPacketHandler.RegisterPackets();
     }
@@ -111,7 +114,7 @@ public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
-        if (Config.syncWithBetterQuesting && event.getGui() != null) {
+        if (syncWithBQ && event.getGui() != null) {
             if (event.getGui() instanceof GuiPartyManage || event.getGui() instanceof GuiPartyCreate) {
                 event.setCanceled(true);
                 Minecraft.getMinecraft().displayGuiScreen(new GuiBQSynced());

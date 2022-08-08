@@ -15,7 +15,7 @@ public class StgDel {
 
     public static final String modId = "stgdel";
     public static final String name = "StageDelimiter";
-    public static final String version = "1.1.1";
+    public static final String version = "1.1.2";
 
     @SidedProxy(modId = StgDel.modId,clientSide = "BananaFructa.StgDel.Proxy.ClientProxy",serverSide = "BananaFructa.StgDel.Proxy.CommonProxy")
     public static CommonProxy proxy;
@@ -29,11 +29,11 @@ public class StgDel {
     @Mod.EventHandler
     public void Init(FMLInitializationEvent event) {
         if (proxy instanceof ClientProxy) ((ClientProxy)proxy).InitClient(event);
-        if (Config.syncWithBetterQuesting) BetterQuestingMethodWrapper.init();
     }
 
     @Mod.EventHandler
     public void Server(FMLServerStartingEvent event) {
+        if (Config.syncWithBetterQuesting) BetterQuestingMethodWrapper.init();
         MinecraftForge.EVENT_BUS.register(proxy);
         proxy.InitServer(event);
     }
