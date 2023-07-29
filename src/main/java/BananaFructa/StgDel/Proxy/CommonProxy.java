@@ -7,18 +7,32 @@ import BananaFructa.StgDel.Network.SPacketStageChangeState;
 import BananaFructa.StgDel.Network.SPacketSyncBQ;
 import BananaFructa.StgDel.Network.StgDelPacketHandler;
 import BananaFructa.StgDel.*;
+import blusunrize.immersiveengineering.ImmersiveEngineering;
+import blusunrize.immersiveengineering.common.blocks.metal.TileEntityTurret;
+import io.netty.handler.codec.http2.Http2InboundFrameLogger;
+import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistry;
+import org.lwjgl.Sys;
 
 import java.io.File;
 import java.util.*;
@@ -216,10 +230,21 @@ public class CommonProxy {
         return null;
     }
 
+    protected static String getCompleteRegistry(ItemStack is) {
+        String r = is.getItem().getRegistryName().toString();
+        if (is.getItem().getHasSubtypes()) {
+            int meta = is.getMetadata();
+            if (meta != 0) {
+                r += ":" + meta;
+            }
+        }
+        return r;
+    }
+
     public boolean IsItemUseAllowedForPlayer (EntityPlayer player, ItemStack is) {
         try {
             if (is == null || player.capabilities.isCreativeMode) return true;
-            String name = is.getItem().getRegistryName().toString();
+            String name = getCompleteRegistry(is);
             if (name.equals("minecraft:air")) return true;
             UUID uuid = player.getUniqueID();
             if (BannedUsageCache.get(uuid) == null || AllowedUsageCache.get(uuid) == null) return true;
@@ -229,12 +254,9 @@ public class CommonProxy {
             for (Integer id : StageRegistryNames.keySet()) {
                 if (!UnlockedStages.contains(id)) {
                     for (String register : StageRegistryNames.get(id)) {
-                        if (IsRegistryExcepted(register, name)) {
-                            if (AllowedUsageCache.get(uuid).size() > 4) AllowedUsageCache.get(uuid).remove(0);
-                            AllowedUsageCache.get(uuid).add(name);
-                            return true;
-                        }
+                        if (IsRegistryExcepted(register, name)) continue;
                         if (DoRegistriesMatch(register, name)) {
+                            if (BannedUsageCache.size() > 4) BannedUsageCache.remove(0);
                             BannedUsageCache.get(player.getUniqueID()).add(name);
                             return false;
                         }
@@ -260,4 +282,74 @@ public class CommonProxy {
         if (a.startsWith("!") && b.startsWith(a.replace("!",""))) return true;
         return false;
     }
+
+    @SubscribeEvent
+    public void onBlockPlace(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote || !StgDel.immersiveEngineeringLoaded) return;
+        event.getWorld().getMinecraftServer().addScheduledTask(new Runnable() {
+            @Override
+            public void run() {
+                TileEntity entity = event.getWorld().getTileEntity(event.getPos());
+                BlockPos pos = event.getPos();
+
+                if (entity instanceof TileEntityTurret) {
+                    TileEntityTurret turretEntity = (TileEntityTurret) entity;
+
+                    long teamId = stageStateData.GetTeamID(event.getPlayer().getUniqueID());
+
+                    if (teamId != -1) {
+                        Team t = stageStateData.GetTeam(teamId);
+                        for (UUID uuid : t.Memebers) {
+                            if (uuid.equals(event.getPlayer().getUniqueID())) continue;
+                            String name = stageStateData.GetLocalFromUUID(uuid);
+                            turretEntity.targetList.add(name);
+                        }
+                        turretEntity.owner = stageStateData.GetLocalFromUUID(t.Owner);
+                    }
+
+                }
+
+            }
+        });
+    }
+
+    public void trySwitchTurretOwner(World world, BlockPos possiblePos, UUID uuid) {
+        TileEntity entity = world.getTileEntity(possiblePos);
+        if (entity instanceof TileEntityTurret) {
+            TileEntityTurret turretEntity = (TileEntityTurret) entity;
+            if (turretEntity.dummy) {
+                trySwitchTurretOwner(world, possiblePos.down(), uuid);
+                return;
+            }
+            long id = stageStateData.GetTeamID(uuid);
+            if (id != -1) {
+                Team t = stageStateData.GetTeam(id);
+                if (!t.IsMemeber(stageStateData.GetUUIDFromLocal(turretEntity.owner))) return;
+            } else return;
+            turretEntity.owner = stageStateData.GetLocalFromUUID(uuid);
+
+            queue.add(new Runnable() {
+                @Override
+                public void run() {
+                    turretEntity.owner = stageStateData.GetLocalFromUUID(stageStateData.GetTeam(id).Owner);
+                }
+            });
+
+        }
+    }
+
+    @SubscribeEvent
+    public void onRightClick(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getWorld().isRemote || !StgDel.immersiveEngineeringLoaded) return;
+        trySwitchTurretOwner(event.getWorld(),event.getPos(),event.getEntityPlayer().getUniqueID());
+    }
+
+    Queue<Runnable> queue = new PriorityQueue<>();
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onTick(TickEvent.ServerTickEvent event) {
+        if (!queue.isEmpty()) queue.poll().run();
+    }
+
+
 }

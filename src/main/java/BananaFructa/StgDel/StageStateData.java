@@ -1,5 +1,10 @@
 package BananaFructa.StgDel;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Tuple;
@@ -9,10 +14,7 @@ import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class StageStateData extends WorldSavedData {
 
@@ -22,6 +24,7 @@ public class StageStateData extends WorldSavedData {
     public List<Team> Teams = new ArrayList<>();
     public HashMap<UUID,List<Integer>> PlayerData = new HashMap<>();
     public HashMap<String,UUID> StoredUsernamesToUUID = new HashMap<>();
+    public HashMap<UUID,String> StoredUUIDToUsernames = new HashMap<>();
 
     public HashMap<Long,Integer> stdIdToBqId = new HashMap<>();
 
@@ -45,24 +48,15 @@ public class StageStateData extends WorldSavedData {
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
-        ByteArrayInputStream byteIn_PD = new ByteArrayInputStream(nbt.getByteArray("PlayerData"));
-        ByteArrayInputStream byteIn_TD = new ByteArrayInputStream(nbt.getByteArray("Teams"));
-        ByteArrayInputStream byteIn_UUID = new ByteArrayInputStream(nbt.getByteArray("StoredUUIDs"));
-        ByteArrayInputStream byteIn_ids = new ByteArrayInputStream(nbt.getByteArray("SDBQ_IDS"));
+        Gson gson = new Gson();
 
         try {
 
-            ObjectInputStream in_PD = new ObjectInputStream(byteIn_PD);
-            PlayerData = (HashMap<UUID, List<Integer>>) in_PD.readObject();
-
-            ObjectInputStream in_TD = new ObjectInputStream(byteIn_TD);
-            Teams = (List<Team>) in_TD.readObject();
-
-            ObjectInputStream in_UUID = new ObjectInputStream(byteIn_UUID);
-            StoredUsernamesToUUID = (HashMap<String,UUID>) in_UUID.readObject();
-
-            ObjectInputStream in_ids = new ObjectInputStream(byteIn_ids);
-            stdIdToBqId = (HashMap<Long, Integer>) in_ids.readObject();
+            PlayerData = gson.fromJson(nbt.getString("PlayerData"), new TypeToken<HashMap<UUID,List<Integer>>>(){}.getType());
+            Teams = gson.fromJson(nbt.getString("Teams"), new TypeToken<List<Team>>(){}.getType());
+            StoredUsernamesToUUID = gson.fromJson(nbt.getString("StoredUUIDs"), new TypeToken<HashMap<String,UUID>>(){}.getType());
+            StoredUUIDToUsernames = gson.fromJson(nbt.getString("StoredUUIDs_i"),new TypeToken<HashMap<UUID,String>>(){}.getType());
+            stdIdToBqId = gson.fromJson(nbt.getString("SDBQ_IDS"),new TypeToken<HashMap<Long,Integer>>(){}.getType());
 
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -72,35 +66,18 @@ public class StageStateData extends WorldSavedData {
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        ByteArrayOutputStream byteOut_PD = new ByteArrayOutputStream();
-        ByteArrayOutputStream byteOut_TD = new ByteArrayOutputStream();
-        ByteArrayOutputStream byteOut_UUID = new ByteArrayOutputStream();
-        ByteArrayOutputStream byteOut_ids = new ByteArrayOutputStream();
+
+        Gson gson = new Gson();
 
         try {
-
-            ObjectOutputStream out_PD = new ObjectOutputStream(byteOut_PD);
-
-            out_PD.writeObject(PlayerData);
-            compound.setByteArray("PlayerData",byteOut_PD.toByteArray());
-
-            ObjectOutputStream out_TD = new ObjectOutputStream(byteOut_TD);
-
-            out_TD.writeObject(Teams);
-            compound.setByteArray("Teams",byteOut_TD.toByteArray());
-
-            ObjectOutputStream out_UUID = new ObjectOutputStream(byteOut_UUID);
-
-            out_UUID.writeObject(StoredUsernamesToUUID);
-            compound.setByteArray("StoredUUIDs", byteOut_UUID.toByteArray());
-
-            ObjectOutputStream out_ids = new ObjectOutputStream(byteOut_ids);
-
-            out_ids.writeObject(stdIdToBqId);
-            compound.setByteArray("SDBQ_IDS", byteOut_ids.toByteArray());
+            compound.setString("PlayerData",gson.toJson(PlayerData));
+            compound.setString("Teams",gson.toJson(Teams));
+            compound.setString("StoredUUIDs", gson.toJson(StoredUsernamesToUUID));
+            compound.setString("StoredUUIDs_i", gson.toJson(StoredUUIDToUsernames));
+            compound.setString("SDBQ_IDS", gson.toJson(stdIdToBqId));
 
 
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             exception.printStackTrace();
         }
 
@@ -119,6 +96,15 @@ public class StageStateData extends WorldSavedData {
     public long GetTeamID(String name) {
         for (Team t : Teams) {
             if (t.Name.equals(name.toLowerCase())) {
+                return t.ID;
+            }
+        }
+        return -1;
+    }
+
+    public long GetTeamID(UUID player) {
+        for (Team t : Teams) {
+            if (t.IsMemeber(player)) {
                 return t.ID;
             }
         }
@@ -372,14 +358,21 @@ public class StageStateData extends WorldSavedData {
         return null;
     }
 
+    public String GetLocalFromUUID(UUID uuid) {
+        if (StoredUUIDToUsernames.containsKey(uuid)) return  StoredUUIDToUsernames.get(uuid);
+        return null;
+    }
+
     public void AddUsernameUUID(String name,UUID uuid) {
         for (String username : StoredUsernamesToUUID.keySet()) {
             if (StoredUsernamesToUUID.get(username).equals(uuid) && !name.equals(username)) {
                 StoredUsernamesToUUID.remove(username);
+                StoredUUIDToUsernames.remove(uuid);
             }
             break;
         }
         StoredUsernamesToUUID.put(name,uuid);
+        StoredUUIDToUsernames.put(uuid,name);
         markDirty();
     }
 

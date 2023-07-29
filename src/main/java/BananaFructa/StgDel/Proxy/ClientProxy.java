@@ -10,8 +10,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.ContainerWorkbench;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -22,13 +24,18 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class ClientProxy extends CommonProxy {
 
     Minecraft mc = Minecraft.getMinecraft();
 
     public List<Stage> Stages = new ArrayList<>();
+
+    private final List<String> BannedUsageCacheClient = new ArrayList<String>();
+    private final List<String> AllowedUsageCacheClient = new ArrayList<String>();
 
     // client side boolean
     public boolean syncWithBQ = false;
@@ -40,13 +47,15 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onClientLeave(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
         Stages.clear();
+        BannedUsageCacheClient.clear();
+        AllowedUsageCacheClient.clear();
     }
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (mc.currentScreen instanceof GuiInventory) {
             GuiContainer container = (GuiContainer) mc.currentScreen;
-            if(!IsItemUseAllowed(container.inventorySlots.getSlot(0).getStack())) {
+            if(!IsItemUseAllowedForMe(container.inventorySlots.getSlot(0).getStack())) {
                 for (int i = 1;i < 5;i++) {
                     mc.playerController.windowClick(container.inventorySlots.windowId,i,0,ClickType.QUICK_MOVE,mc.player);
                 }
@@ -54,7 +63,7 @@ public class ClientProxy extends CommonProxy {
         } else if (mc.currentScreen instanceof GuiCrafting) {
             GuiContainer container = (GuiContainer) mc.currentScreen;
             ContainerWorkbench containerWorkbench = (ContainerWorkbench) container.inventorySlots;
-            if (!IsItemUseAllowed(containerWorkbench.craftResult.getStackInSlot(0))) {
+            if (!IsItemUseAllowedForMe(containerWorkbench.craftResult.getStackInSlot(0))) {
                 for (int i = 1; i < 10; i++) {
                     mc.playerController.windowClick(containerWorkbench.windowId, i, 0, ClickType.QUICK_MOVE, mc.player);
                 }
@@ -75,10 +84,11 @@ public class ClientProxy extends CommonProxy {
             }
         }
 
-        if (IsItemUseAllowed(event.getItemStack())) return;
+        if (IsItemUseAllowedForMe(event.getItemStack())) return;
         for (Stage s : Stages) {
             if (!s.isActive()) {
-                if (s.RegistryNames.stream().anyMatch(o -> DoRegistriesMatch(o,event.getItemStack().getItem().getRegistryName().toString()))) {
+                final String registry = getCompleteRegistry(event.getItemStack());
+                if (!s.RegistryNames.stream().anyMatch(o -> IsRegistryExcepted(o,registry)) && s.RegistryNames.stream().anyMatch(o -> DoRegistriesMatch(o,registry))) {
                     event.getToolTip().add("\u00a7cRequires " + s.getStageName() + "!");
                 }
             }
@@ -88,7 +98,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onPlayerInteractionClient(PlayerInteractEvent.RightClickItem event) {
         if (event.getWorld().isRemote) {
-            if (!IsItemUseAllowed(event.getItemStack())) {
+            if (!IsItemUseAllowedForMe(event.getItemStack())) {
                 event.setCanceled(true);
             }
         }
@@ -97,7 +107,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onPlayerInteractionClient(PlayerInteractEvent.RightClickBlock event) {
         if (event.getWorld().isRemote) {
-            if (!IsItemUseAllowed(event.getItemStack())) {
+            if (!IsItemUseAllowedForMe(event.getItemStack())) {
                 event.setCanceled(true);
             }
         }
@@ -106,7 +116,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onPlayerInteractionClient(PlayerInteractEvent.LeftClickBlock event) {
         if (event.getWorld().isRemote) {
-            if (!IsItemUseAllowed(event.getItemStack())) {
+            if (!IsItemUseAllowedForMe(event.getItemStack())) {
                 event.setCanceled(true);
             }
         }
@@ -132,8 +142,34 @@ public class ClientProxy extends CommonProxy {
         return false;
     }
 
-    public boolean IsItemUseAllowed(ItemStack stack) {
+    public boolean IsItemUseAllowedForMe(ItemStack is) {
         if (Minecraft.getMinecraft().player == null) return true;
-        return IsItemUseAllowedForPlayer(Minecraft.getMinecraft().player, stack);
+        try {
+            if (is == null || Minecraft.getMinecraft().player.capabilities.isCreativeMode) return true;
+            String name = getCompleteRegistry(is);
+            if (name.equals("minecraft:air")) return true;
+            if (BannedUsageCacheClient == null || AllowedUsageCacheClient == null) return true;
+            if (BannedUsageCacheClient.contains(name)) return false;
+            if (AllowedUsageCacheClient.contains(name)) return true;
+            for (Stage s : Stages) {
+                if (!s.isActive()) {
+                    for (String register : s.RegistryNames) {
+                        if (IsRegistryExcepted(register, name)) continue;
+                        if (DoRegistriesMatch(register, name)) {
+                            if (BannedUsageCacheClient.size() > 4) BannedUsageCacheClient.remove(0);
+                            BannedUsageCacheClient.add(name);
+                            return false;
+                        }
+                    }
+                }
+            }
+            if (AllowedUsageCacheClient.size() > 4) AllowedUsageCacheClient.remove(0);
+            AllowedUsageCacheClient.add(name);
+            return true;
+        } catch (Exception err) {
+            err.printStackTrace();
+            return true;
+        }
+
     }
 }
